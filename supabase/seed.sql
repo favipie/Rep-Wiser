@@ -1,0 +1,2 @@
+-- Common exercise definitions ship deterministically in src/lib/exercises.ts.
+-- Private user tables intentionally start empty; no fictional workout history is seeded.
