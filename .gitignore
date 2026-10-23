@@ -6,3 +6,5 @@ out/
 *.tsbuildinfo
 *.tar.gz
 .sites-local/
+supabase/.temp/
+supabase/.branches/

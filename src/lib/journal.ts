@@ -6,7 +6,7 @@ import { blankData, type Data } from './model';
 export async function resolveOwner(): Promise<string | null> {
   if (supabase) {
     const { data } = await supabase.auth.getSession();
-    return data.session?.user.id ?? null;
+    return data.session?.user.id ?? (sessionStorage.getItem('repwise-device-mode') === 'yes' ? 'guest' : null);
   }
   return sessionStorage.getItem('repwise-device-mode') === 'yes' ? 'guest' : null;
 }
@@ -22,7 +22,10 @@ export async function loadJournal(owner: string): Promise<LoadedJournal> {
   let notice = '';
   if (owner !== 'guest' && supabase) {
     const { data: remote, error } = await supabase.rpc('read_journal');
-    if (error) throw error;
+    if (error) {
+      if (local) return { ...local, notice: 'Cloud is unavailable. Showing this device’s saved journal; cloud target changes require a connection.' };
+      throw error;
+    }
     if (remote && !local?.dirty) {
       writeLocal(owner, { data: remote.data, revision: remote.revision, dirty: false });
       return { data: remote.data, revision: remote.revision, dirty: false, notice };

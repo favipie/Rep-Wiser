@@ -24,7 +24,7 @@ function Target({ t, f }: { t: NextTarget; f: Fmt }) {
   </div>;
 }
 
-function ExerciseCard({ a, index, f }: { a: ExerciseAnalysis; index: number; f: Fmt }) {
+function ExerciseCard({ a, index, f, controls }: { a: ExerciseAnalysis; index: number; f: Fmt; controls?: React.ReactNode }) {
   const prev = a.previousComparable ?? null;
   const data = a.sets.map(s => ({ set: 'Set ' + s.index, Today: s.reps, [prev ? 'Last comparable' : 'x']: prev?.sets[s.index - 1]?.reps ?? null }));
   const hist = a.history.map(h => ({ date: dateText(h.date), load: Math.round(h.topWeight * f.factor * 100) / 100, reps: h.totalReps, e1rm: h.estimated1RM === null ? null : Math.round(h.estimated1RM * f.factor * 10) / 10 }));
@@ -47,6 +47,7 @@ function ExerciseCard({ a, index, f }: { a: ExerciseAnalysis; index: number; f: 
     <p className="small-text muted"><b>Previous session.</b> {a.previous ? a.previous.summary + (a.previous.comparable ? ' (comparable)' : a.previous.differences.length ? ` — not directly comparable: ${a.previous.differences.join('; ')}.` : '') : 'None logged for this exercise.'}</p>
     {(a.records.load || a.records.reps) && <p className="record-note">★ {a.records.detail.join(' ')}</p>}
     <Target t={a.next} f={f} />
+    {controls}
     <details><summary>Why this recommendation, and the data behind it</summary>
       <p className="small-text"><b>Rule applied.</b> {a.evidence.rules[0]}</p>
       <p className="small-text muted">{a.next.explanation}</p>
@@ -67,7 +68,7 @@ function ExerciseCard({ a, index, f }: { a: ExerciseAnalysis; index: number; f: 
   </section>;
 }
 
-export function AnalysisReport({ analysis, units }: { analysis: SessionAnalysis; units: 'kg' | 'lb' }) {
+export function AnalysisReport({ analysis, units, renderControls }: { analysis: SessionAnalysis; units: 'kg' | 'lb'; renderControls?: (a: ExerciseAnalysis) => React.ReactNode }) {
   const f: Fmt = { units, factor: units === 'lb' ? 2.2046226218 : 1 };
   const o = analysis.overview;
   const adherence = analysis.exercises.map(a => ({ name: a.name.length > 14 ? a.name.slice(0, 13) + '…' : a.name, Planned: a.planned, Completed: a.completed, 'Met minimum': a.setsMeetingMin }));
@@ -94,7 +95,7 @@ export function AnalysisReport({ analysis, units }: { analysis: SessionAnalysis;
       {adherence.length > 0 && <section className="panel"><h3>Target adherence by exercise</h3><ResponsiveContainer width="100%" height={220}><BarChart data={adherence}><CartesianGrid stroke="#333" strokeDasharray="3 3" /><XAxis dataKey="name" stroke="#888" fontSize={10} /><YAxis stroke="#888" fontSize={11} allowDecimals={false} width={30} /><Tooltip contentStyle={TIP} /><Legend wrapperStyle={{ fontSize: 11 }} /><Bar dataKey="Planned" fill={GREY} /><Bar dataKey="Completed" fill="#8fb82f" /><Bar dataKey="Met minimum" fill={LIME} /></BarChart></ResponsiveContainer><p className="muted small-text">“Met minimum” counts completed working sets at or above each exercise’s minimum reps.</p></section>}
     </section>
 
-    <section aria-labelledby="sec-b"><h2 id="sec-b" className="section-title">Exercise by exercise</h2>{analysis.exercises.map((a, i) => <ExerciseCard key={a.performedId} a={a} index={i} f={f} />)}</section>
+    <section aria-labelledby="sec-b"><h2 id="sec-b" className="section-title">Exercise by exercise</h2>{analysis.exercises.map((a, i) => <ExerciseCard key={a.performedId} a={a} index={i} f={f} controls={renderControls?.(a)} />)}</section>
 
     <div className="two-col">
       <section className="panel" aria-labelledby="sec-c"><h2 id="sec-c" className="section-title small">What went well</h2><ObservationList items={analysis.wentWell} empty="No standout positives were identified from the logged data. That is not a judgement; it just means nothing crossed a defined marker." /></section>

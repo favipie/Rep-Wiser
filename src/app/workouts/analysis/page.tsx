@@ -5,11 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnalysisReport } from '@/components/analysis-report';
+import { TargetDecision } from '@/components/target-controls';
 import { loadJournal, resolveOwner } from '@/lib/journal';
 import { defaultPreferences, type Data } from '@/lib/model';
 import { analyzeSession } from '@/lib/intelligence';
 
-type State = { status: 'loading' } | { status: 'signedout' } | { status: 'error'; message: string } | { status: 'ready'; data: Data; notice: string };
+type State = { status: 'loading' } | { status: 'signedout' } | { status: 'error'; message: string } | { status: 'ready'; owner: string; data: Data; notice: string };
 
 function Analysis() {
   const id = useSearchParams().get('session');
@@ -22,7 +23,7 @@ function Analysis() {
         if (cancelled) return;
         if (!owner) { setState({ status: 'signedout' }); return; }
         const j = await loadJournal(owner);
-        if (!cancelled) setState({ status: 'ready', data: j.data, notice: j.notice });
+        if (!cancelled) setState({ status: 'ready', owner, data: j.data, notice: j.notice });
       } catch (e) {
         if (!cancelled) setState({ status: 'error', message: e instanceof Error ? e.message : String((e as { message?: string }).message ?? e) });
       }
@@ -45,7 +46,7 @@ function Analysis() {
   else if (session.status !== 'complete') content = panel('Finish this workout to analyze it.', 'Analysis only covers completed workouts. Your draft is saved.', back);
   else if (analysis) content = <>
     {state.status === 'ready' && state.notice && <div className="notice" role="status">{state.notice}</div>}
-    <AnalysisReport analysis={analysis} units={units} />
+    <AnalysisReport analysis={analysis} units={units} renderControls={a => state.status === 'ready' && <TargetDecision owner={state.owner} data={state.data} source={session} analysis={a} />} />
   </>;
 
   return <main className="training analysis-page"><div className="analysis-wrap">

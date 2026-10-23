@@ -1,26 +1,30 @@
-# Live integration verification
-Use a disposable Supabase project and two confirmed users A/B. Do not run destructive checks against a production journal.
+# Disposable database verification
 
-1. As anonymous, select each private table and call read_journal/save_journal. Expect permission denial.
-2. As A, read the empty journal (revision 0), save a draft (revision becomes 1), read it, complete it, sync, reload, edit a set, sync, reload. Verify exact weights/reps and status.
-3. As B, read_journal must return B's empty journal. Directly select A's owner_id from every table; expect no rows.
-4. As B, attempt to insert/update/delete rows using A's owner_id or reference A's session/performed IDs. Expect RLS or composite foreign-key rejection.
-5. As A, call save_journal twice with the same expected_revision. The second must fail and the first data must remain.
-6. Submit an invalid set within a save and verify all pre-existing records remain (transaction rollback).
-7. Delete an A session, sync, reload; verify its performed exercises, sets, recommendations are removed and record aggregates recompute.
-8. Sign out. Verify A's journal is not displayed. Sign in as B and verify A's device cache is never rendered.
-9. Disconnect the network while editing. Refresh an already cached page; verify draft survives, cloud sync errors preserve the device copy.
-10. On two devices, edit independently. Verify stale sync fails, then export the stale journal for reconciliation.
+The imported SQL verification script was replaced: it relied on direct target writes that this migration now forbids. Use `scripts/test-targets-stack.mjs` against real local Supabase. It creates disposable users, authenticates through GoTrue, and calls PostgREST with their JWTs. It does not simulate auth.uid or RLS.
 
-These steps require external credentials and have not been claimed as executed.
+Prerequisites: Docker-compatible runtime, Supabase CLI, Node 24, pnpm, and PostgreSQL psql. The checked-in config identifies a separate local verification project. Do not link it to a hosted project.
 
-## Target decisions (`202610220001_workout_targets.sql`)
+```sh
+pnpm install --frozen-lockfile
+supabase start
+node scripts/test-targets-stack.mjs
+supabase stop --no-backup
+```
 
-Do **not** run the verification suite against production. It writes rows and deletes a row from `auth.users`, so it refuses to run without `-v confirm_disposable=yes`.
+The runner reads local keys from `supabase status -o json` without printing them and refuses non-loopback API/database hosts. It checks source/exercise ownership, anonymous denial, RLS isolation, direct INSERT/UPDATE/DELETE denial, invalid prescriptions, stale fingerprints, immutable IDs, simultaneous decisions, journal resynchronization, destination ownership/provenance, idempotent application, edited/deleted sources, retained history, rollback/reinstall, and duplicate-install refusal. User cleanup runs on assertion failure. Rollback runs only after those disposable users are removed.
 
-1. Use a disposable Supabase project (or a branch database) with both migrations applied.
-2. Create two throwaway users, A and B, and save a journal for each through `save_journal`.
-3. Edit the two UUIDs at the top of `supabase/tests/202610220001_workout_targets.verify.sql` to match those users.
-4. Run it, passing user A's journal JSON so the sync-survival tests can re-save it:
-   `psql "$DISPOSABLE_DB_URL" -v confirm_disposable=yes -v a_payload="$(cat a-journal.json)" -f supabase/tests/202610220001_workout_targets.verify.sql`
-5. Expect `ALL CHECKS PASSED`. To undo the migration run `supabase/rollback/202610220001_workout_targets.down.sql` (it deletes only saved target decisions).
+The GitHub workflow runs the same suite on an isolated runner. Unit tests alone are not evidence these database checks passed. Review the actual result before applying the migration.
+
+## Migration behavior
+
+Targets use soft references because save_journal reconstructs journal tables. Authenticated clients have SELECT only, scoped by RLS. Security-definer RPCs use an empty search path and explicit owner filters. Each decision takes the same profile row lock as save_journal, computes the server exercise-history fingerprint, checks the synced revision and engine version, and compares the expected active target before replacement. Replacements receive new immutable IDs; old records remain superseded. Rejection retires the previous active decision too.
+
+The fingerprint includes completed same-exercise history through the source, preferences, and custom exercise definition. Newer completed workouts separately invalidate old targets. Application requires a subsequent completed owned session with matching exercise, target ID, selected load and planned prescription. Logged results may differ from the plan. Application is retryable for the same destination. Missing/edited sources remain in decision history but cannot be used.
+
+The profile lock serializes the supported journal/target RPC workflow. Existing journal tables still allow owner-scoped direct CRUD under the original migration; arbitrary direct journal writes do not take this lock. This PR preserves that existing API contract. External integrations should use the journal RPC for serialization.
+
+This migration is for installations without the target table. If an earlier target migration has run, stop and prepare a forward migration after inspecting its data. Do not run this file or its destructive rollback over an existing installation.
+
+## Production gate
+
+No production database was touched. Obtain explicit approval after reviewing the migration and successful real-stack results. Back up the database, apply only the target migration after the journal migration, then deploy the matching client. Rollback permanently deletes target decisions; export them before considering rollback. Journal data is not deleted by target rollback.
