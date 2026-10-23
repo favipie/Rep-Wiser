@@ -15,6 +15,20 @@ const session = (name: string, day: number, exs: Performed[], id = `s${++n}`): S
 const dataOf = (sessions: Session[]): Data => ({ ...blankData(), preferences: defaultPreferences, sessions });
 const analyzeLast = (sessions: Session[]) => analyzeSession(sessions.at(-1)!, dataOf(sessions));
 
+it('does not compare a mixed-load workout with uniform-load history', () => {
+  const prior = entry('Bench press', [[30, 8, 2], [30, 8, 2], [30, 8, 2]]);
+  const current = entry('Bench press', [[30, 8, 2], [35, 7, 2], [35, 6, 2]]);
+  expect(isComparable(current, prior)).toBe(false);
+  expect(analyzeLast([session('Push', 1, [prior]), session('Push', 2, [current])]).exercises[0].previousComparable).toBeNull();
+});
+it('does not let extra sets on one exercise hide missing sets on another', () => {
+  const s = session('Push', 1, [entry('Bench press', [[30, 8, 2], [30, 8, 2], [30, 8, 2], [30, 8, 2]]), entry('Lateral raise', [[5, 10, 2], [5, 10, 2]])]);
+  const a = analyzeLast([s]);
+  expect(a.overview.completedSets).toBe(6);
+  expect(a.wentWell.some(o => o.id === 'session.o1')).toBe(false);
+  expect(a.needsAttention.some(o => o.id === 'session.o2')).toBe(true);
+});
+
 describe('Test 1: first-session underperformance', () => {
   const s = session('Push', 1, [entry('Bench press', [[30, 6, null], [30, 5, null], [30, 6, null]], { min: 6, max: 10 })]);
   const a = analyzeLast([s]).exercises[0];

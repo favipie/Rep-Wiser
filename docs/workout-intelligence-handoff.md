@@ -17,7 +17,7 @@ New work adds acceptance/modification/rejection controls, decision history, expl
 
 ## Validation and release
 
-Run `pnpm test`, `pnpm typecheck`, `pnpm lint`, and `pnpm build`. The integration run passed 103 tests: 82 imported/original and 21 new target tests. See current PR checks for later results. `supabase/VERIFY.md` describes real-stack verification. Docker, PostgreSQL and Supabase CLI were unavailable on the Windows authoring machine; database claims require an actual successful CI/local-stack run.
+Run `pnpm test`, `pnpm typecheck`, `pnpm lint`, and `pnpm build`. The integration run passed 105 tests: 82 imported/original, 21 new target tests, and two analysis regressions. Mixed working loads are no longer treated as comparable, and extra sets cannot mask another exercise's missing sets. See current PR checks for later results. `supabase/VERIFY.md` describes real-stack verification. Docker, PostgreSQL and Supabase CLI were unavailable on the Windows authoring machine; database claims require an actual successful CI/local-stack run.
 
 Mobile controls use two-column inputs and wrapping actions. Manual small-screen, keyboard, offline and two-browser account checks remain a release gate unless separately recorded as passed.
 

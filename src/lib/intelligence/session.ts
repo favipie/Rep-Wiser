@@ -74,7 +74,7 @@ export function analyzeSession(session: Session, data: Pick<Data, 'sessions' | '
     { id: 'session.plannedSets', label: 'Working sets planned', value: plannedSets }, { id: 'session.completedSets', label: 'Working sets completed', value: completedSets },
     { id: 'session.totalReps', label: 'Total working reps', value: totalReps }, { id: 'session.volume', label: 'Logged external-load volume', value: round2(volume * fmt.factor), unit: `${fmt.units}·reps` },
   ];
-  if (plannedSets > 0 && completedSets >= plannedSets) wentWell.unshift({ id: 'session.o1', tone: 'positive', title: 'Planned session volume completed', detail: `You completed ${completedSets} working sets against ${plannedSets} planned across ${plural(analyses.length, 'exercise')}.`, facts: ['session.completedSets', 'session.plannedSets'] });
+  if (plannedSets > 0 && counted >= plannedSets) wentWell.unshift({ id: 'session.o1', tone: 'positive', title: 'Planned session volume completed', detail: `You completed ${completedSets} working sets against ${plannedSets} planned across ${plural(analyses.length, 'exercise')}.`, facts: ['session.completedSets', 'session.plannedSets'] });
   if (plannedSets > 0 && counted < plannedSets) needsAttention.unshift({ id: 'session.o2', tone: 'attention', title: 'Session was short of the planned working sets', detail: `${counted} of ${plannedSets} planned working sets were completed (${Math.round(counted / plannedSets * 100)}%).`, facts: ['session.completedSets', 'session.plannedSets'] });
 
   const dataGaps = [

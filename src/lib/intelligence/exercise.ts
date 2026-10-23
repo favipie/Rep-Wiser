@@ -14,7 +14,7 @@ export type ExerciseContext = { key: string; prefs: Pick<Preferences, 'rirMin' |
 export function isComparable(current: Performed, other: Performed): boolean {
   const sets = working(current);
   const weight = sets[0]?.weight;
-  return working(other).length === sets.length && working(other).every(s => s.weight === weight) && other.min === current.min && other.max === current.max;
+  return sets.length > 0 && sets.every(s => s.weight === weight) && working(other).length === sets.length && working(other).every(s => s.weight === weight) && other.min === current.min && other.max === current.max;
 }
 
 const RULES: { id: string; prefix: string; description: string }[] = [
