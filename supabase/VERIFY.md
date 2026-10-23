@@ -13,3 +13,14 @@ Use a disposable Supabase project and two confirmed users A/B. Do not run destru
 10. On two devices, edit independently. Verify stale sync fails, then export the stale journal for reconciliation.
 
 These steps require external credentials and have not been claimed as executed.
+
+## Target decisions (`202610220001_workout_targets.sql`)
+
+Do **not** run the verification suite against production. It writes rows and deletes a row from `auth.users`, so it refuses to run without `-v confirm_disposable=yes`.
+
+1. Use a disposable Supabase project (or a branch database) with both migrations applied.
+2. Create two throwaway users, A and B, and save a journal for each through `save_journal`.
+3. Edit the two UUIDs at the top of `supabase/tests/202610220001_workout_targets.verify.sql` to match those users.
+4. Run it, passing user A's journal JSON so the sync-survival tests can re-save it:
+   `psql "$DISPOSABLE_DB_URL" -v confirm_disposable=yes -v a_payload="$(cat a-journal.json)" -f supabase/tests/202610220001_workout_targets.verify.sql`
+5. Expect `ALL CHECKS PASSED`. To undo the migration run `supabase/rollback/202610220001_workout_targets.down.sql` (it deletes only saved target decisions).
