@@ -2,7 +2,7 @@ import { z } from 'zod';
 export const setSchema = z.object({id:z.string(),weight:z.number().min(0).max(1500),reps:z.number().int().min(0).max(200),rir:z.number().min(0).max(10).nullable(),done:z.boolean(),warmup:z.boolean()});
 export type LiftSet=z.infer<typeof setSchema>;
 export type Exercise={id:string;name:string;muscle:string;secondary:string[];equipment:string;movement:string;min:number;max:number;increment:number;notes:string};
-export type Performed={id:string;exerciseId:string;name:string;muscle:string;min:number;max:number;increment:number;required:number;sets:LiftSet[];notes:string;pain:boolean;technique:boolean;override:number|null};
+export type Performed={id:string;exerciseId:string;name:string;muscle:string;min:number;max:number;increment:number;required:number;sets:LiftSet[];notes:string;pain:boolean;technique:boolean;override:number|null;targetId?:string;targetWeight?:number};
 export type Session={id:string;name:string;date:string;status:'draft'|'complete';exercises:Performed[]};
 export type Template={id:string;name:string;days:number[];exercises:Performed[]};
 export type Preferences={goal:string;experience:string;units:'kg'|'lb';split:string;days:number;equipment:string[];increment:number;rirMin:number;rirMax:number};

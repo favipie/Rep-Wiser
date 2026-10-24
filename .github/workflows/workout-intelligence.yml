@@ -1,0 +1,38 @@
+name: Workout intelligence verification
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test && pnpm typecheck && pnpm lint && pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify desktop, mobile, keyboard, offline and cross-tab workflows
+        run: pnpm exec playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-artifacts
+          path: test-results/
+      - uses: supabase/setup-cli@v3
+        with:
+          version: latest
+      - name: Start disposable Supabase
+        run: supabase start > /tmp/repwise-local-stack.log 2>&1
+      - name: Test real authentication, RLS, lifecycle and concurrency
+        run: node scripts/test-targets-stack.mjs
+      - name: Stop disposable stack
+        if: always()
+        run: supabase stop --no-backup

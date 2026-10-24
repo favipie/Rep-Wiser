@@ -29,6 +29,13 @@ Guest and account journals are separate. Signing in does not automatically migra
 - Static-export PWA shell and previously loaded assets cached for offline use. Account authentication and cloud synchronization require internet. Device drafts survive refresh.
 - Supabase normalized tables, owner RLS, indexes, transactional save/read RPCs, optimistic concurrency.
 
+## Workout Intelligence (post-workout analysis)
+Finishing a workout opens `/workouts/analysis/?session=<id>` (a query string, not `[sessionId]`, because the app is a static export and session ids only exist at runtime). History rows and the dashboard link to the same page. The report is computed deterministically from your saved records each time it is opened, so editing any workout updates it and a stale report cannot be shown. Every next-load decision comes from `recommend()`; `src/lib/intelligence/` only explains, compares and contextualizes it (checklist, trend, evidence level, muscle sets). Report criteria live in `src/lib/intelligence/config.ts`.
+
+The **Plan vs Actual** tab compares, per day, the sets and rep ranges each exercise was planned for against the completed working sets and reps, plus scheduled template days with no workout. Past template versions are not stored, so missed days use the template's current prescription.
+
+Not yet implemented: accepting/rejecting suggested targets, saved Ask REPWISE conversations, and the optional AI explanation layer (a static export has no server to hold an API key).
+
 ## Calculations
 Loads are stored in kg and converted for lb display. Warm-ups and uncompleted sets are excluded. Progression requires all prescribed sets at a consistent working load, upper rep target met, known RIR within user range, acceptable technique, and no pain concern. Missing RIR holds load. Three comparable sessions are required for a declining-performance review. Users can explicitly override numerical suggestions. Estimates use Epley on 1–12 reps. Nothing estimates or guarantees muscle growth.
 
