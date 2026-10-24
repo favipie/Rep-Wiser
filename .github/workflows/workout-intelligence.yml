@@ -18,6 +18,14 @@ jobs:
           version: 11.25.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm test && pnpm typecheck && pnpm lint && pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify desktop, mobile, keyboard, offline and cross-tab workflows
+        run: pnpm exec playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-artifacts
+          path: test-results/
       - uses: supabase/setup-cli@v3
         with:
           version: latest
