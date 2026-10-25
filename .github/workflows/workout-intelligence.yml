@@ -27,6 +27,7 @@ jobs:
           name: browser-failure-artifacts
           path: test-results/
       - uses: supabase/setup-cli@v3
+        id: supabase-cli
         with:
           version: latest
       - name: Start disposable Supabase
@@ -34,5 +35,5 @@ jobs:
       - name: Test real authentication, RLS, lifecycle and concurrency
         run: node scripts/test-targets-stack.mjs
       - name: Stop disposable stack
-        if: always()
+        if: always() && steps.supabase-cli.outcome == 'success'
         run: supabase stop --no-backup

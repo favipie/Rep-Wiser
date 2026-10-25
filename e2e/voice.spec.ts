@@ -42,7 +42,7 @@ test('stale preview and cancellation cannot overwrite a manual edit', async ({ p
   await open(page); await preview(page);
   await page.getByLabel('Bench press set 1 weight', { exact: true }).fill('35');
   await page.getByLabel('I checked the exercise').check(); await page.getByRole('button', { name: 'Confirm & save set' }).click();
-  await expect(page.getByRole('alert')).toContainText('changed during review');
+  await expect(page.getByRole('region', { name: 'REPWISE Voice' }).getByRole('alert')).toContainText('changed during review');
   await page.getByRole('button', { name: 'Cancel entry' }).click();
   expect(await confirmedCount(page)).toBe(0);
   await expect(page.getByLabel('Bench press set 1 weight', { exact: true })).toHaveValue('35');
@@ -113,7 +113,7 @@ test('permission denial and navigation stop recognition without adding a set', a
   await installSpeechDouble(page); await open(page);
   await page.getByRole('button', { name: 'Record a set' }).click();
   await page.evaluate(() => (window as unknown as { testRecognition: { onerror: (e: unknown) => void } }).testRecognition.onerror({ error: 'not-allowed' }));
-  await expect(page.getByRole('alert')).toContainText('permission was denied');
+  await expect(page.getByRole('region', { name: 'REPWISE Voice' }).getByRole('alert')).toContainText('permission was denied');
   await page.getByRole('button', { name: 'Record a set' }).click();
   await page.evaluate(() => { Object.assign(window, { microphoneAborted: false }); });
   await page.getByRole('button', { name: 'Save & close' }).click();
