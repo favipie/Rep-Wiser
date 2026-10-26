@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 const SpeechContext = createContext<{ speak: (text: string, automatic?: boolean) => void; stop: () => void }>({ speak: () => {}, stop: () => {} });
 export const useVoiceSpeech = () => useContext(SpeechContext);
 
-export function VoiceSpeech({ children }: { children: ReactNode }) {
+export function VoiceSpeech({ children, automaticLabel = 'Read set confirmations automatically' }: { children: ReactNode; automaticLabel?: string }) {
   const [supported, setSupported] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voice, setVoice] = useState('');
@@ -48,7 +48,7 @@ export function VoiceSpeech({ children }: { children: ReactNode }) {
       <p>Audio is off initially. Use a Speak button to listen. Available voices depend on your device; online voices may send text to the browser’s speech provider.</p>
       {!supported ? <p>Speech playback is unavailable in this browser.</p> : <>
         <div className="checks"><label><input type="checkbox" checked={muted} onChange={e => { setMuted(e.target.checked); if (e.target.checked) stop(); }}/>Mute audio</label>
-          <label><input type="checkbox" checked={automatic} onChange={e => { setAutomatic(e.target.checked); if (e.target.checked) setMuted(false); }}/>Read set confirmations automatically</label></div>
+          <label><input type="checkbox" checked={automatic} onChange={e => { setAutomatic(e.target.checked); if (e.target.checked) setMuted(false); }}/>{automaticLabel}</label></div>
         <div className="form-grid"><label>Speech speed<select value={rate} onChange={e => setRate(Number(e.target.value))}>{[0.75, 1, 1.25, 1.5].map(v => <option key={v} value={v}>{v}×</option>)}</select></label>
           <label>Playback voice<select value={voice} onChange={e => setVoice(e.target.value)}><option value="">Device default</option>{voices.map(v => <option key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}{v.localService ? ' · device' : ' · online'}</option>)}</select></label></div>
         <div className="set-actions"><button type="button" disabled={!playing} onClick={() => { if (paused) window.speechSynthesis.resume(); else window.speechSynthesis.pause(); setPaused(!paused); }}>{paused ? 'Resume speech' : 'Pause speech'}</button><button type="button" disabled={!playing} onClick={stop}>Stop speech</button></div>

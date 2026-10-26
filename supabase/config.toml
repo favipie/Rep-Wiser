@@ -21,3 +21,6 @@ enabled = false
 enabled = true
 site_url = "http://localhost:3000"
 enable_signup = true
+
+[functions.ask-repwise]
+verify_jwt = true
